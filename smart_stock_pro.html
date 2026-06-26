@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Stock Pro - ระบบจัดการสต็อกสินค้าและสิทธิ์พนักงาน</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Sarabun & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', 'Inter', sans-serif;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full"></div>
+
+    <!-- Navigation Bar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">📦</span>
+                    <div>
+                        <span class="text-xl font-bold tracking-tight text-slate-900">Smart Stock <span class="text-brand-600">Pro</span></span>
+                        <span class="block text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Enterprise Edition</span>
+                    </div>
+                </div>
+
+                <!-- Simulation Control: Role Switcher -->
+                <div class="flex items-center gap-3 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+                    <div class="hidden sm:block pl-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">พนักงานขณะนี้:</div>
+                    <select id="userSelector" onchange="handleUserChange()" class="bg-white border-0 text-sm font-medium text-slate-700 py-1.5 px-3 rounded-lg shadow-xs focus:ring-2 focus:ring-brand-500 focus:outline-none cursor-pointer">
+                        <!-- Will be dynamically populated -->
+                    </select>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full flex flex-col lg:flex-row gap-8">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="w-full lg:w-64 shrink-0">
+            <nav class="space-y-1" aria-label="Sidebar">
+                <button onclick="switchTab('dashboard')" id="tabBtn-dashboard" class="tab-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-brand-50 text-brand-700 border-l-4 border-brand-600">
+                    <span class="mr-3 text-lg">📊</span> แผงควบคุม (Dashboard)
+                </button>
+                <button onclick="switchTab('inventory')" id="tabBtn-inventory" class="tab-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-l-4 border-transparent">
+                    <span class="mr-3 text-lg">📦</span> คลังสินค้า (Stock)
+                </button>
+                <button onclick="switchTab('users')" id="tabBtn-users" class="tab-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-l-4 border-transparent">
+                    <span class="mr-3 text-lg">👥</span> จัดการพนักงาน (Employees)
+                </button>
+                <button onclick="switchTab('logs')" id="tabBtn-logs" class="tab-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-l-4 border-transparent">
+                    <span class="mr-3 text-lg">📜</span> ประวัติทำรายการ (Logs)
+                </button>
+                <button onclick="switchTab('info')" id="tabBtn-info" class="tab-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-l-4 border-transparent">
+                    <span class="mr-3 text-lg">📖</span> ความเป็นมาและปัญหา
+                </button>
+            </nav>
+
+            <!-- Current User Card -->
+            <div class="mt-6 bg-gradient-to-br from-brand-800 to-brand-900 rounded-2xl p-5 text-white shadow-md relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 text-7xl opacity-10">👤</div>
+                <h3 class="text-xs uppercase tracking-wider font-semibold text-brand-200">ผู้ใช้งานปัจจุบัน</h3>
+                <p id="curUserName" class="text-lg font-bold mt-1">สมชาย มีดี</p>
+                <p id="curUserRoleBadge" class="inline-block mt-2 px-2.5 py-0.5 bg-brand-500 text-xs font-semibold rounded-full uppercase tracking-wider">ผู้ดูแลระบบ (Admin)</p>
+                <div class="mt-4 pt-4 border-t border-brand-700 text-xs text-brand-100 space-y-1">
+                    <p id="curUserRights" class="flex items-center gap-1.5">
+                        <span class="text-green-400">●</span> สิทธิ์: เข้าถึงแบบเต็มรูปแบบ
+                    </p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 min-w-0 bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
+            
+            <!-- ================= TAB: DASHBOARD ================= -->
+            <div id="tabContent-dashboard" class="tab-pane space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">แผงควบคุมภาพรวม (Overview Dashboard)</h2>
+                        <p class="text-sm text-slate-500">ข้อมูลสรุปและสถานะความเคลื่อนไหวล่าสุดของคลังสินค้า</p>
+                    </div>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200/80 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">รายการสินค้าทั้งหมด</p>
+                            <p id="statTotalItems" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+                        </div>
+                        <span class="text-3xl bg-blue-50 p-3 rounded-lg">📦</span>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200/80 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">จำนวนรวมในคลัง</p>
+                            <p id="statTotalStock" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+                        </div>
+                        <span class="text-3xl bg-green-50 p-3 rounded-lg">🔢</span>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200/80 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">สินค้าสต็อกต่ำ (< 10 ชิ้น)</p>
+                            <p id="statLowStock" class="text-2xl font-bold text-rose-600 mt-1">0</p>
+                        </div>
+                        <span class="text-3xl bg-rose-50 p-3 rounded-lg">⚠️</span>
+                    </div>
+                    <div class="bg-slate-50 rounded-xl p-5 border border-slate-200/80 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider font-bold">มูลค่าสต็อกรวม</p>
+                            <p id="statTotalValue" class="text-2xl font-bold text-brand-700 mt-1">฿0</p>
+                        </div>
+                        <span class="text-3xl bg-brand-50 p-3 rounded-lg">💰</span>
+                    </div>
+                </div>
+
+                <!-- Main Layout of Dashboard -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Low Stock Alerts -->
+                    <div class="lg:col-span-2 border border-slate-200 rounded-xl p-5">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 mb-4">
+                            <span class="text-rose-500 text-lg">⚠️</span> สินค้าใกล้หมดสต็อก / ต้องสั่งซื้อเพิ่ม
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-50 text-slate-600 font-semibold uppercase border-b border-slate-200">
+                                    <tr>
+                                        <th class="py-2.5 px-4">ชื่อสินค้า</th>
+                                        <th class="py-2.5 px-4">หมวดหมู่</th>
+                                        <th class="py-2.5 px-4 text-center">คงเหลือ</th>
+                                        <th class="py-2.5 px-4 text-right">สถานะ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboardLowStockBody" class="divide-y divide-slate-100 text-slate-700">
+                                    <!-- Low stock data -->
+                                </tbody>
+                            </table>
+                            <div id="noLowStockMsg" class="hidden text-center py-8 text-slate-400">
+                                ✨ ไม่มีสินค้าใดต่ำกว่ากำหนดสต็อก
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Logs Summary -->
+                    <div class="border border-slate-200 rounded-xl p-5 flex flex-col h-[350px]">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 mb-4">
+                            <span class="text-slate-500 text-lg">📜</span> กิจกรรมล่าสุด
+                        </h3>
+                        <div id="dashboardLogs" class="flex-1 overflow-y-auto space-y-3 text-xs pr-1">
+                            <!-- Logs injected here -->
+                        </div>
+                        <button onclick="switchTab('logs')" class="mt-4 text-center text-xs font-bold text-brand-600 hover:text-brand-800 transition">ดูประวัติทั้งหมด →</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB: INVENTORY ================= -->
+            <div id="tabContent-inventory" class="tab-pane space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">คลังสินค้า (Inventory Management)</h2>
+                        <p class="text-sm text-slate-500">จัดการ เพิ่ม ลบ แก้ไข ข้อมูลราคาสินค้า และการปรับสต็อก</p>
+                    </div>
+                    <!-- Action Button restricted by permissions in JS -->
+                    <button id="addProductBtn" onclick="openProductModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-xs">
+                        ➕ เพิ่มสินค้าใหม่
+                    </button>
+                </div>
+
+                <!-- Filters & Search Bar -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-4 items-center">
+                    <div class="w-full md:flex-1 relative">
+                        <span class="absolute inset-y-0 left-3 flex items-center text-slate-400">🔍</span>
+                        <input type="text" id="inventorySearch" oninput="filterInventory()" placeholder="ค้นหาชื่อสินค้า..." class="w-full bg-white border border-slate-300 rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+                    </div>
+                    <div class="w-full md:w-auto flex gap-2">
+                        <select id="inventoryCategoryFilter" onchange="filterInventory()" class="bg-white border border-slate-300 rounded-xl py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer">
+                            <option value="">ทุกหมวดหมู่</option>
+                            <option value="อิเล็กทรอนิกส์">อิเล็กทรอนิกส์</option>
+                            <option value="เครื่องใช้สำนักงาน">เครื่องใช้สำนักงาน</option>
+                            <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
+                            <option value="อาหารและเครื่องดื่ม">อาหารและเครื่องดื่ม</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Inventory Table -->
+                <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-xs">
+                    <table class="w-full text-left border-collapse bg-white text-sm">
+                        <thead class="bg-slate-50 text-slate-600 font-semibold uppercase border-b border-slate-200">
+                            <tr>
+                                <th class="py-3 px-4">ชื่อสินค้า</th>
+                                <th class="py-3 px-4">หมวดหมู่</th>
+                                <th class="py-3 px-4">ราคาทุน</th>
+                                <th class="py-3 px-4">ราคาขาย</th>
+                                <th class="py-3 px-4 text-center">คงเหลือในคลัง</th>
+                                <th class="py-3 px-4 text-center">ปรับสต็อกเร็ว</th>
+                                <th class="py-3 px-4 text-right">เครื่องมือ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventoryTableBody" class="divide-y divide-slate-200 text-slate-700">
+                            <!-- Dynamically loaded products -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ================= TAB: EMPLOYEES ================= -->
+            <div id="tabContent-users" class="tab-pane space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">จัดการพนักงานและสิทธิ์การเข้าใช้งาน</h2>
+                        <p class="text-sm text-slate-500">จำลองบัญชีผู้ใช้งาน เพื่อทดสอบโครงสร้างสิทธิ์ต่างๆ ในระบบ</p>
+                    </div>
+                    <button id="addEmployeeBtn" onclick="openEmployeeModal()" class="bg-brand-600 hover:bg-brand-700 text-white font-medium text-sm px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-xs">
+                        👤 เพิ่มพนักงานใหม่
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="employeesGrid">
+                    <!-- Dynamic Employee Cards -->
+                </div>
+            </div>
+
+            <!-- ================= TAB: LOGS ================= -->
+            <div id="tabContent-logs" class="tab-pane space-y-6 hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">บันทึกประวัติการทำรายการ (System Logs)</h2>
+                        <p class="text-sm text-slate-500">ข้อมูลประวัติการทำงานทุกขั้นตอนอย่างละเอียด แก้ปัญหาข้อมูลรั่วไหลหรือแก้ไขย้อนหลังโดยไร้ตัวตน</p>
+                    </div>
+                    <button id="clearLogBtn" onclick="confirmClearLogs()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-semibold text-xs px-4 py-2 rounded-lg transition">
+                        🗑️ ล้างประวัติ (เฉพาะ Admin)
+                    </button>
+                </div>
+
+                <div class="bg-slate-950 text-emerald-400 p-5 rounded-2xl font-mono text-sm shadow-inner relative overflow-hidden h-[500px] flex flex-col">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-800 text-xs text-slate-400 mb-4">
+                        <span>SYSTEM LOG TERMINAL v1.0.4</span>
+                        <span id="logCounterText" class="animate-pulse">Active Connections: 1</span>
+                    </div>
+                    <div id="logsTerminal" class="flex-1 overflow-y-auto space-y-1.5 pr-2">
+                        <!-- Command lines -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB: PROJECT INFO ================= -->
+            <div id="tabContent-info" class="tab-pane space-y-8 hidden">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900">เอกสารประกอบโครงงานเว็บระบบคลังสินค้า</h2>
+                    <p class="text-sm text-slate-500">บทความความสำคัญ ที่มา ปัญหาและเป้าหมายการแก้ปัญหาเชิงธุรกิจ</p>
+                </div>
+
+                <div class="space-y-6 text-slate-700 leading-relaxed max-w-4xl">
+                    <section class="space-y-3">
+                        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <span class="text-brand-600">■</span> ความเป็นมาและความสำคัญของปัญหา
+                        </h3>
+                        <p>
+                            ในยุคการแข่งขันทางธุรกิจที่รวดเร็ว การบริหารจัดการสต็อกสินค้า (Inventory Management) คือปัจจัยชี้ชะตาสำหรับผลกำไรและการเติบโตของธุรกิจ คลังสินค้าที่ดีเปรียบเสมือนหัวใจสำคัญของห่วงโซ่อุปทาน การที่ธุรกิจมีข้อมูลสินค้าไม่ตรง ข้อมูลล้าสมัย หรือสินค้าสูญหาย ย่อมนำมาซึ่งการสูญเสียโอกาสทางการค้า และก่อให้เกิดต้นทุนแฝงมหาศาลจากการสั่งซื้อซ้ำซ้อนหรือสินค้าเสื่อมสภาพ
+                        </p>
+                        <p>
+                            ปัญหาหลักของระบบจัดการสต็อกดั้งเดิม เช่น การบันทึกกระดาษ หรือการทำ Spreadsheet (Excel/Google Sheets) ร่วมกัน มักพบช่องโหว่ร้ายแรง 3 ประการ ได้แก่:
+                        </p>
+                        <ul class="list-disc pl-6 space-y-1">
+                            <li><strong class="text-slate-900">ปัญหาเรื่องความปลอดภัยและการเข้าถึงข้อมูล:</strong> การเปิดสิทธิ์ให้ทุกคนเข้าถึงไฟล์ข้อมูลเดียวกันโดยปราศจากการจำกัดสิทธิ์ ทำให้พนักงานที่ไม่มีหน้าที่เกี่ยวข้องสามารถเข้าถึงราคาทุน กำไรสุทธิ หรือข้อมูลลูกค้า ซึ่งเสี่ยงต่อการรั่วไหลและการแก้ไขที่ไม่มีเหตุผลสมควร</li>
+                            <li><strong class="text-slate-900">ปัญหาความคลุมเครือและความไม่โปร่งใส:</strong> หากข้อมูลคลังสินค้าถูกป้อนผิดพลาด สูญหาย หรือถูกแก้ไขโดยทุจริต จะไม่สามารถระบุได้ว่า "ใคร" "แก้ไขเมื่อไหร่" และ "เพราะเหตุใด" เนื่องจากไม่มีระบบจัดทำประวัติล็อกรายการ (System Logs)</li>
+                            <li><strong class="text-slate-900">การไร้ระเบียบในการปฏิบัติงาน:</strong> พนักงานหยิบสต็อก (Staff) และผู้ดูแลการเงินระดับสูง (Admin) ไม่ควรเข้าใช้งานหน้าโปรแกรมเดียวกัน ระบบที่ดีจำเป็นต้องจำกัดสิทธิ์ (Role-Based Access Control) เพื่อช่วยให้พนักงานแต่ละคนโฟกัสในหน้าที่ของตนได้อย่างแม่นยำ</li>
+                        </ul>
+                    </section>
+
+                    <section class="space-y-3">
+                        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <span class="text-brand-600">■</span> วัตถุประสงค์ในการพัฒนาระบบ
+                        </h3>
+                        <ul class="list-decimal pl-6 space-y-1">
+                            <li>เพื่อสร้างโปรแกรมบริหารจัดการคลังสินค้าแบบดิจิทัลที่สามารถเก็บรักษา ปรับปรุง และประมวลผลข้อมูลสต็อกได้แบบเรียลไทม์ (Real-time Inventory Monitor)</li>
+                            <li>เพื่อพัฒนาระบบการเข้าถึงข้อมูลตามบทบาทหน้าที่ของพนักงาน (Role-Based Access Control) ป้องกันความผิดพลาดจากการเข้าถึงข้อมูลเกินจำเป็น</li>
+                            <li>เพื่อสร้างระบบจัดทำประวัติบันทึกการทำงานของพนักงานแบบละเอียด ปรับปรุงความโปร่งใสและสร้างช่องทางการตรวจสอบย้อนกลับ (Traceability) ได้ทุกขั้นตอน</li>
+                        </ul>
+                    </section>
+
+                    <section class="space-y-4">
+                        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <span class="text-brand-600">■</span> โครงสร้างและตารางความรับผิดชอบสิทธิ์พนักงาน (Access Matrix)
+                        </h3>
+                        <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead class="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
+                                    <tr>
+                                        <th class="p-3">บทบาทพนักงาน (Role)</th>
+                                        <th class="p-3 text-center">ดูสินค้า</th>
+                                        <th class="p-3 text-center">ปรับเพิ่ม/ลดสต็อก</th>
+                                        <th class="p-3 text-center">เพิ่ม/แก้ไขชื่อ & ราคา</th>
+                                        <th class="p-3 text-center">ลบสินค้า</th>
+                                        <th class="p-3 text-center">จัดการพนักงาน</th>
+                                        <th class="p-3 text-center">ล้างประวัติ (Logs)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-600">
+                                    <tr>
+                                        <td class="p-3 font-semibold text-slate-900">👤 ผู้ดูแลระบบ (Admin)</td>
+                                        <td class="p-3 text-center text-green-600 font-bold">✔️</td>
+                                        <td class="p-3 text-center text-green-600 font-bold">✔️</td>
+                                        <td class="p-3 text-center text-green-600 font-bold">✔️</td>
+                                        <td class="p-3 text-center text-green-600 font-bold">✔️</td>
+                                        <td class="p-3 text-center text-green-600 font-bold">✔️</td>
+                                        <td class="p-3 text-center text-green-600 font-bold">✔️</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 font-semibold text-slate-900">🧑‍💼 ผู้จัดการคลัง (Manager)</td>
+                                        <td class="p-3 text-center text-green-600 font-bold">✔️</td>
+                                        <td class="p-3 text-center text-green-600 font-bold">✔️</td>
+                                        <td class="p-3 text-center text-green-600 font-bold">✔️</td>
+                                        <td class="p-3 text-center text-rose-500 font-bold">❌</td>
+                                        <td class="p-3 text-center text-rose-500 font-bold">❌</td>
+                                        <td class="p-3 text-center text-rose-500 font-bold">❌</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 font-semibold text-slate-900">📦 พนักงานจัดเก็บ (Staff)</td>
+                                        <td class="p-3 text-center text-green-600 font-bold">✔️</td>
+                                        <td class="p-3 text-center text-green-600 font-bold">✔️</td>
+                                        <td class="p-3 text-center text-rose-500 font-bold">❌</td>
+                                        <td class="p-3 text-center text-rose-500 font-bold">❌</td>
+                                        <td class="p-3 text-center text-rose-500 font-bold">❌</td>
+                                        <td class="p-3 text-center text-rose-500 font-bold">❌</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-3 font-semibold text-slate-900">👁️ ผู้สังเกตการณ์ (Viewer)</td>
+                                        <td class="p-3 text-center text-green-600 font-bold">✔️</td>
+                                        <td class="p-3 text-center text-rose-500 font-bold">❌</td>
+                                        <td class="p-3 text-center text-rose-500 font-bold">❌</td>
+                                        <td class="p-3 text-center text-rose-500 font-bold">❌</td>
+                                        <td class="p-3 text-center text-rose-500 font-bold">❌</td>
+                                        <td class="p-3 text-center text-rose-500 font-bold">❌</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Footbar -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-400">
+        © 2026 Smart Stock Pro Inventory Management Systems. พัฒนาขึ้นเพื่อโครงงานศึกษาและการจัดการระบบสิทธิ์พนักงาน
+    </footer>
+
+    <!-- ================= MODAL: ADD/EDIT PRODUCT ================= -->
+    <div id="productModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden transition-opacity duration-200">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-100 overflow-hidden transform scale-95 transition-all duration-200" id="productModalContent">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 id="productModalTitle" class="font-bold text-slate-800 text-lg">เพิ่มสินค้าใหม่</h3>
+                <button onclick="closeProductModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold cursor-pointer">&times;</button>
+            </div>
+            <form id="productForm" onsubmit="saveProduct(event)" class="p-6 space-y-4">
+                <input type="hidden" id="formProductId">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">ชื่อสินค้า</label>
+                    <input type="text" id="formProductName" required class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">หมวดหมู่</label>
+                    <select id="formProductCategory" required class="w-full border border-slate-300 bg-white rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="อิเล็กทรอนิกส์">อิเล็กทรอนิกส์</option>
+                        <option value="เครื่องใช้สำนักงาน">เครื่องใช้สำนักงาน</option>
+                        <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์</option>
+                        <option value="อาหารและเครื่องดื่ม">อาหารและเครื่องดื่ม</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">ราคาทุน (บาท)</label>
+                        <input type="number" id="formProductCost" required min="0" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">ราคาขาย (บาท)</label>
+                        <input type="number" id="formProductPrice" required min="0" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">จำนวนสต็อกเริ่มต้น (ชิ้น)</label>
+                    <input type="number" id="formProductStock" required min="0" class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3 text-sm font-semibold">
+                    <button type="button" onclick="closeProductModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition shadow-xs">บันทึกสินค้า</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL: ADD/EDIT EMPLOYEE ================= -->
+    <div id="employeeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 hidden transition-opacity duration-200">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl border border-slate-100 overflow-hidden transform scale-95 transition-all duration-200" id="employeeModalContent">
+            <div class="bg-slate-50 px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-lg">เพิ่มพนักงานจำลองใหม่</h3>
+                <button onclick="closeEmployeeModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold cursor-pointer">&times;</button>
+            </div>
+            <form id="employeeForm" onsubmit="saveEmployee(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">ชื่อพนักงาน</label>
+                    <input type="text" id="formEmployeeName" required class="w-full border border-slate-300 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">ระดับสิทธิ์ในการเข้าถึง (Role)</label>
+                    <select id="formEmployeeRole" required class="w-full border border-slate-300 bg-white rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <option value="Admin">Admin (ผู้ดูแลระบบ)</option>
+                        <option value="Manager">Manager (ผู้จัดการสต็อก)</option>
+                        <option value="Staff">Staff (พนักงานคลังสินค้า)</option>
+                        <option value="Viewer">Viewer (ผู้สังเกตการณ์)</option>
+                    </select>
+                </div>
+                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3 text-sm font-semibold">
+                    <button type="button" onclick="closeEmployeeModal()" class="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition shadow-xs">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT SYSTEM LOGIC ================= -->
+    <script>
+        // Default Core Data
+        const defaultProducts = [
+            { id: 1, name: "Lenovo ThinkPad X1 Carbon M2", category: "อิเล็กทรอนิกส์", cost: 42000, price: 59900, stock: 4 },
+            { id: 2, name: "โต๊ะปรับระดับไฟฟ้า Ergonomic Desk", category: "เฟอร์นิเจอร์", cost: 7500, price: 12900, stock: 15 },
+            { id: 3, name: "เครื่องพิมพ์เลเซอร์ HP LaserJet Pro", category: "เครื่องใช้สำนักงาน", cost: 4900, price: 6890, stock: 8 },
+            { id: 4, name: "กระดาษ Double A 80gsm (Box)", category: "เครื่องใช้สำนักงาน", cost: 480, price: 650, stock: 30 },
+            { id: 5, name: "กาแฟคั่วเมล็ดพรีเมียมบราซิล 250g", category: "อาหารและเครื่องดื่ม", cost: 180, price: 320, stock: 3 },
+            { id: 6, name: "จอแสดงผล Dell UltraSharp 27\"", category: "อิเล็กทรอนิกส์", cost: 11000, price: 14900, stock: 7 }
+        ];
+
+        const defaultEmployees = [
+            { id: 1, name: "สมชาย มีดี (CEO)", role: "Admin" },
+            { id: 2, name: "วรรณพร นึกคิด (Manager)", role: "Manager" },
+            { id: 3, name: "มนตรี ตระกร้าทอง (Staff)", role: "Staff" },
+            { id: 4, name: "สมศรี พาร์ทเนอร์ (Auditor)", role: "Viewer" }
+        ];
+
+        // State Store
+        let products = [];
+        let employees = [];
+        let systemLogs = [];
+        let currentUserId = 1; // Default to Somchai (Admin)
+
+        // Initialize App
+        window.onload = function() {
+            loadData();
+            initSelector();
+            updateCurrentUserInfo();
+            renderDashboard();
+            renderInventoryTable();
+            renderEmployees();
+            renderLogsTerminal();
+            addSystemLog("ระบบคลังสินค้าอัจฉริยะ (Smart Stock Pro v1.0.4) เริ่มต้นการทำเซสชัน", "SYSTEM");
+        };
+
+        // LocalStorage Management
+        function loadData() {
+            const savedProducts = localStorage.getItem('smart_stock_products');
+            const savedEmployees = localStorage.getItem('smart_stock_employees');
+            const savedLogs = localStorage.getItem('smart_stock_logs');
+            const savedActiveUserId = localStorage.getItem('smart_stock_active_uid');
+
+            products = savedProducts ? JSON.parse(savedProducts) : [...defaultProducts];
+            employees = savedEmployees ? JSON.parse(savedEmployees) : [...defaultEmployees];
+            systemLogs = savedLogs ? JSON.parse(savedLogs) : [
+                { id: 1, timestamp: new Date().toLocaleTimeString(), user: "SYSTEM", action: "ติดตั้งฐานข้อมูลคลังสินค้าเริ่มต้น" }
+            ];
+            currentUserId = savedActiveUserId ? parseInt(savedActiveUserId) : 1;
+        }
+
+        function saveData() {
+            localStorage.setItem('smart_stock_products', JSON.stringify(products));
+            localStorage.setItem('smart_stock_employees', JSON.stringify(employees));
+            localStorage.setItem('smart_stock_logs', JSON.stringify(systemLogs));
+            localStorage.setItem('smart_stock_active_uid', currentUserId);
+        }
+
+        // Custom Notification (Toast)
+        function showToast(message, type = 'success') {
+            const container = document.getElementById("toastContainer");
+            const toast = document.createElement("div");
+            toast.className = `flex items-center gap-3 p-4 rounded-xl border shadow-xl bg-white transition duration-300 border-l-4 transform translate-y-2 opacity-0 scale-95`;
+            
+            let icon = "✅";
+            if (type === 'success') {
+                toast.className += " border-l-green-500 text-green-800";
+                icon = "🟢";
+            } else if (type === 'warning') {
+                toast.className += " border-l-amber-500 text-amber-800";
+                icon = "🟡";
+            } else if (type === 'error') {
+                toast.className += " border-l-rose-500 text-rose-800";
+                icon = "🔴";
+            }
+
+            toast.innerHTML = `
+                <span class="text-lg">${icon}</span>
+                <span class="text-sm font-medium flex-1">${message}</span>
+                <button class="text-slate-400 hover:text-slate-600 font-bold ml-2 cursor-pointer" onclick="this.parentElement.remove()">&times;</button>
+            `;
+
+            container.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2', 'scale-95');
+            }, 10);
+
+            // Auto Close after 4s
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2', 'scale-95');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // System Log Recorder
+        function addSystemLog(action, explicitUser = null) {
+            const currentUser = getCurrentUser();
+            const userName = explicitUser || (currentUser ? currentUser.name : "Unknown");
+            const newLog = {
+                id: systemLogs.length + 1,
+                timestamp: new Date().toLocaleTimeString(),
+                user: userName,
+                action: action
+            };
+            systemLogs.push(newLog);
+            saveData();
+            renderLogsTerminal();
+            
+            // If the dashboard is open, update log panel
+            const dashLogContainer = document.getElementById("dashboardLogs");
+            if (dashLogContainer) {
+                const item = document.createElement("div");
+                item.className = "p-2 bg-white rounded border border-slate-100 flex justify-between gap-2 shadow-xs";
+                item.innerHTML = `
+                    <div class="truncate text-slate-700">
+                        <span class="font-semibold text-slate-900">${newLog.user}</span>: ${newLog.action}
+                    </div>
+                    <span class="text-slate-400 shrink-0 font-mono">${newLog.timestamp}</span>
+                `;
+                dashLogContainer.prepend(item);
+            }
+        }
+
+        // Dropdown populator for simulation
+        function initSelector() {
+            const selector = document.getElementById("userSelector");
+            selector.innerHTML = "";
+            employees.forEach(emp => {
+                const opt = document.createElement("option");
+                opt.value = emp.id;
+                opt.innerText = `${emp.name} (${emp.role})`;
+                if (emp.id === currentUserId) opt.selected = true;
+                selector.appendChild(opt);
+            });
+        }
+
+        // Check active User & Role
+        function getCurrentUser() {
+            return employees.find(emp => emp.id === currentUserId) || employees[0];
+        }
+
+        // Tab Switching Engine
+        function switchTab(tabName) {
+            document.querySelectorAll(".tab-pane").forEach(pane => pane.classList.add("hidden"));
+            document.getElementById(`tabContent-${tabName}`).classList.remove("hidden");
+
+            document.querySelectorAll(".tab-btn").forEach(btn => {
+                btn.className = "tab-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-l-4 border-transparent";
+            });
+
+            const activeBtn = document.getElementById(`tabBtn-${tabName}`);
+            if (activeBtn) {
+                activeBtn.className = "tab-btn w-full flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 bg-brand-50 text-brand-700 border-l-4 border-brand-600";
+            }
+
+            // Sync triggers on tab change
+            if (tabName === 'dashboard') renderDashboard();
+            if (tabName === 'inventory') renderInventoryTable();
+            if (tabName === 'users') renderEmployees();
+            if (tabName === 'logs') renderLogsTerminal();
+        }
+
+        // Handle Active User Change (Simulation)
+        function handleUserChange() {
+            const selector = document.getElementById("userSelector");
+            currentUserId = parseInt(selector.value);
+            saveData();
+            updateCurrentUserInfo();
+            
+            const user = getCurrentUser();
+            addSystemLog(`สลับเป็นผู้ดูแลระบบหลักโดยการควบคุมบทบาทสิทธิ์ไปยัง "${user.name}"`);
+            showToast(`สลับการใช้โปรแกรมเป็น "${user.name}" สิทธิ์: ${user.role}`, 'success');
+
+            // Force rerender components that rely on permissions
+            renderInventoryTable();
+            renderDashboard();
+            renderEmployees();
+        }
+
+        // Update sidebar and buttons state when role changes
+        function updateCurrentUserInfo() {
+            const user = getCurrentUser();
+            document.getElementById("curUserName").innerText = user.name;
+            
+            const badge = document.getElementById("curUserRoleBadge");
+            badge.innerText = `${user.role}`;
+
+            // Style Role Badges
+            badge.className = "inline-block mt-2 px-2.5 py-0.5 text-xs font-semibold rounded-full uppercase tracking-wider ";
+            if (user.role === 'Admin') badge.className += "bg-rose-500 text-white";
+            else if (user.role === 'Manager') badge.className += "bg-amber-500 text-slate-900";
+            else if (user.role === 'Staff') badge.className += "bg-green-500 text-white";
+            else badge.className += "bg-slate-400 text-white";
+
+            const rightsElement = document.getElementById("curUserRights");
+            if (user.role === 'Admin') {
+                rightsElement.innerHTML = `🟢 สิทธิ์: แดชบอร์ด / สต็อก / แก้ไข / เพิ่มพนักงาน / ประวัติ`;
+            } else if (user.role === 'Manager') {
+                rightsElement.innerHTML = `🟡 สิทธิ์: แดชบอร์ด / จัดการสต็อก (ห้ามแก้ไขพนักงาน)`;
+            } else if (user.role === 'Staff') {
+                rightsElement.innerHTML = `🔵 สิทธิ์: สแกนสต็อก (ปรับตัวเลข +/- ได้เท่านั้น)`;
+            } else {
+                rightsElement.innerHTML = `⚪ สิทธิ์: อ่านอย่างเดียว (Viewer Mode)`;
+            }
+
+            // Control Visibility of Action Buttons Based on Role
+            const addProductBtn = document.getElementById("addProductBtn");
+            const addEmployeeBtn = document.getElementById("addEmployeeBtn");
+            const clearLogBtn = document.getElementById("clearLogBtn");
+
+            // Add Product permission
+            if (user.role === 'Admin' || user.role === 'Manager') {
+                addProductBtn.classList.remove("hidden");
+            } else {
+                addProductBtn.classList.add("hidden");
+            }
+
+            // Add Employee permission
+            if (user.role === 'Admin') {
+                addEmployeeBtn.classList.remove("hidden");
+            } else {
+                addEmployeeBtn.classList.add("hidden");
+            }
+
+            // Clear Log permission
+            if (user.role === 'Admin') {
+                clearLogBtn.classList.remove("hidden");
+            } else {
+                clearLogBtn.classList.add("hidden");
+            }
+        }
+
+        // ================= BUSINESS LOGIC: DASHBOARD =================
+        function renderDashboard() {
+            // Count metrics
+            const totalItems = products.length;
+            const totalStock = products.reduce((acc, p) => acc + p.stock, 0);
+            const lowStockProducts = products.filter(p => p.stock < 10);
+            const lowStockCount = lowStockProducts.length;
+            
+            // Financial calculations (Restricted View)
+            const currentUser = getCurrentUser();
+            const totalVal = products.reduce((acc, p) => acc + (p.price * p.stock), 0);
+            
+            document.getElementById("statTotalItems").innerText = totalItems;
+            document.getElementById("statTotalStock").innerText = totalStock;
+            document.getElementById("statLowStock").innerText = lowStockCount;
+            
+            // Financial View control: Only Admin & Manager can see Total Stock Value
+            const valueElement = document.getElementById("statTotalValue");
+            if (currentUser.role === 'Admin' || currentUser.role === 'Manager') {
+                valueElement.innerText = `฿${totalVal.toLocaleString()}`;
+            } else {
+                valueElement.innerText = `🔒 ล็อก`;
+                valueElement.title = "สิทธิ์การเงินจำกัดให้ชมเฉพาะแอดมินหรือผู้จัดการ";
+            }
+
+            // Render Low Stock Alert Table
+            const tbody = document.getElementById("dashboardLowStockBody");
+            const msg = document.getElementById("noLowStockMsg");
+            tbody.innerHTML = "";
+
+            if (lowStockCount === 0) {
+                msg.classList.remove("hidden");
+            } else {
+                msg.classList.add("hidden");
+                lowStockProducts.forEach(product => {
+                    const tr = document.createElement("tr");
+                    tr.className = "hover:bg-slate-50/50";
+                    tr.innerHTML = `
+                        <td class="py-2.5 px-4 font-medium text-slate-800">${product.name}</td>
+                        <td class="py-2.5 px-4 text-xs text-slate-500">${product.category}</td>
+                        <td class="py-2.5 px-4 text-center font-bold text-rose-600">${product.stock}</td>
+                        <td class="py-2.5 px-4 text-right">
+                            <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold rounded-full bg-rose-100 text-rose-800">
+                                วิกฤต
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Quick Logs on Dashboard
+            const logContainer = document.getElementById("dashboardLogs");
+            logContainer.innerHTML = "";
+            const recentLogs = [...systemLogs].reverse().slice(0, 15);
+            recentLogs.forEach(log => {
+                const div = document.createElement("div");
+                div.className = "p-2 bg-slate-50 rounded border border-slate-100 flex justify-between items-center gap-2";
+                div.innerHTML = `
+                    <div class="truncate text-slate-700">
+                        <span class="font-semibold text-slate-800">${log.user}</span>: ${log.action}
+                    </div>
+                    <span class="text-slate-400 shrink-0 font-mono text-[10px]">${log.timestamp}</span>
+                `;
+                logContainer.appendChild(div);
+            });
+        }
+
+        // ================= BUSINESS LOGIC: INVENTORY =================
+        function renderInventoryTable() {
+            const tbody = document.getElementById("inventoryTableBody");
+            const searchVal = document.getElementById("inventorySearch").value.toLowerCase();
+            const catVal = document.getElementById("inventoryCategoryFilter").value;
+            const user = getCurrentUser();
+
+            tbody.innerHTML = "";
+
+            const filtered = products.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(searchVal);
+                const matchesCat = catVal === "" || p.category === catVal;
+                return matchesSearch && matchesCat;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-12 text-center text-slate-400 font-medium">
+                            <span class="block text-3xl mb-2">🔍</span> ไม่พบข้อมูลสินค้าในคลัง
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            filtered.forEach(p => {
+                // Determine layout according to permissions
+                const canModifyMeta = user.role === 'Admin' || user.role === 'Manager';
+                const canDelete = user.role === 'Admin';
+                const canAdjustStock = user.role !== 'Viewer';
+
+                // Costs and Financial hide details from viewer / staff
+                const costDisplay = (user.role === 'Admin' || user.role === 'Manager') ? `฿${p.cost.toLocaleString()}` : "🔒 ล็อก";
+                const priceDisplay = (user.role === 'Admin' || user.role === 'Manager') ? `฿${p.price.toLocaleString()}` : `฿${p.price.toLocaleString()}`; // Price is visible
+
+                // Quick Adjust Stock Buttons state
+                const adjustBtnHtml = canAdjustStock ? `
+                    <div class="inline-flex rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                        <button onclick="quickAdjustStock(${p.id}, -1)" class="bg-white hover:bg-slate-50 text-slate-600 px-2.5 py-1 text-xs font-bold border-r border-slate-200 cursor-pointer">-</button>
+                        <button onclick="quickAdjustStock(${p.id}, 1)" class="bg-white hover:bg-slate-50 text-slate-600 px-2.5 py-1 text-xs font-bold cursor-pointer">+</button>
+                    </div>
+                ` : `<span class="text-xs text-slate-400 italic">ไม่มีสิทธิ์</span>`;
+
+                // Actions Column
+                const editBtn = canModifyMeta 
+                    ? `<button onclick="editProduct(${p.id})" class="text-brand-600 hover:text-brand-800 font-bold text-xs cursor-pointer">แก้ไข</button>`
+                    : `<span class="text-slate-300 text-xs font-medium cursor-not-allowed" title="สิทธิ์ไม่เพียงพอ">แก้ไข</span>`;
+                
+                const deleteBtn = canDelete
+                    ? `<button onclick="confirmDeleteProduct(${p.id})" class="text-rose-600 hover:text-rose-800 font-bold text-xs cursor-pointer ml-3">ลบ</button>`
+                    : `<span class="text-slate-300 text-xs font-medium cursor-not-allowed ml-3" title="สิทธิ์เฉพาะแอดมิน">ลบ</span>`;
+
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="py-3 px-4">
+                        <div class="font-bold text-slate-800">${p.name}</div>
+                        <div class="text-[10px] text-slate-400 uppercase tracking-wider font-mono">ID: PROD-${String(p.id).padStart(4, '0')}</div>
+                    </td>
+                    <td class="py-3 px-4"><span class="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-medium rounded-md">${p.category}</span></td>
+                    <td class="py-3 px-4 font-medium text-slate-500">${costDisplay}</td>
+                    <td class="py-3 px-4 font-semibold text-slate-800">${priceDisplay}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="inline-block min-w-8 py-0.5 px-2 rounded-md font-bold text-sm ${p.stock < 10 ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-800'}">
+                            ${p.stock}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-center">${adjustBtnHtml}</td>
+                    <td class="py-3 px-4 text-right">${editBtn} ${deleteBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function filterInventory() {
+            renderInventoryTable();
+        }
+
+        // Quick Adjust Stock Operations
+        function quickAdjustStock(id, amount) {
+            const user = getCurrentUser();
+            if (user.role === 'Viewer') {
+                showToast("ผู้ใช้งานระดับ Viewer ไม่ได้รับสิทธิ์ให้ทำรายการปรับสต็อก", "error");
+                return;
+            }
+
+            const pIndex = products.findIndex(p => p.id === id);
+            if (pIndex !== -1) {
+                const prod = products[pIndex];
+                if (prod.stock + amount < 0) {
+                    showToast(`ไม่สามารถปรับสต็อกจนติดลบได้ (เหลือ ${prod.stock} ชิ้น)`, "warning");
+                    return;
+                }
+                prod.stock += amount;
+                saveData();
+                renderInventoryTable();
+                
+                const typeText = amount > 0 ? "เพิ่มขึ้น" : "ลดลง";
+                addSystemLog(`อัปเดตสต็อกสินค้า "${prod.name}" (${typeText} ${Math.abs(amount)} ชิ้น) - สต็อกคงเหลือล่าสุด: ${prod.stock} ชิ้น`);
+                showToast(`ปรับสต็อกสินค้าสำเร็จ คงเหลือ: ${prod.stock} ชิ้น`, "success");
+            }
+        }
+
+        // Create / Edit Product Logic
+        function openProductModal(productId = null) {
+            const modal = document.getElementById("productModal");
+            const form = document.getElementById("productForm");
+            const title = document.getElementById("productModalTitle");
+
+            form.reset();
+            document.getElementById("formProductId").value = "";
+
+            if (productId) {
+                const prod = products.find(p => p.id === productId);
+                if (prod) {
+                    title.innerText = "✏️ แก้ไขข้อมูลสินค้า";
+                    document.getElementById("formProductId").value = prod.id;
+                    document.getElementById("formProductName").value = prod.name;
+                    document.getElementById("formProductCategory").value = prod.category;
+                    document.getElementById("formProductCost").value = prod.cost;
+                    document.getElementById("formProductPrice").value = prod.price;
+                    document.getElementById("formProductStock").value = prod.stock;
+                }
+            } else {
+                title.innerText = "➕ เพิ่มสินค้าใหม่เข้าระบบ";
+            }
+
+            modal.classList.remove("hidden");
+        }
+
+        function closeProductModal() {
+            document.getElementById("productModal").classList.add("hidden");
+        }
+
+        function saveProduct(event) {
+            event.preventDefault();
+            const user = getCurrentUser();
+            if (user.role !== 'Admin' && user.role !== 'Manager') {
+                showToast("สิทธิ์การบันทึกแก้ไขสินค้าเป็นของแอดมินหรือผู้จัดการเท่านั้น", "error");
+                return;
+            }
+
+            const id = document.getElementById("formProductId").value;
+            const name = document.getElementById("formProductName").value.trim();
+            const category = document.getElementById("formProductCategory").value;
+            const cost = parseInt(document.getElementById("formProductCost").value);
+            const price = parseInt(document.getElementById("formProductPrice").value);
+            const stock = parseInt(document.getElementById("formProductStock").value);
+
+            if (price < cost) {
+                if (!confirm("⚠️ ราคาขายน้อยกว่าต้นทุน คุณต้องการบันทึกต่อไปใช่หรือไม่?")) {
+                    return;
+                }
+            }
+
+            if (id) {
+                // Edit mode
+                const index = products.findIndex(p => p.id === parseInt(id));
+                if (index !== -1) {
+                    const old = products[index];
+                    products[index] = { id: parseInt(id), name, category, cost, price, stock };
+                    addSystemLog(`แก้ไขข้อมูลสินค้า ID-${id} จากชื่อเดิม "${old.name}" เป็น "${name}"`);
+                    showToast("อัปเดตข้อมูลสินค้าเสร็จสิ้น", "success");
+                }
+            } else {
+                // Insert mode
+                const newId = products.length > 0 ? Math.max(...products.map(p => p.id)) + 1 : 1;
+                products.push({ id: newId, name, category, cost, price, stock });
+                addSystemLog(`เพิ่มสินค้าเข้าคลังชนิดใหม่: "${name}" หมวดหมู่: ${category} จำนวน: ${stock} ชิ้น`);
+                showToast("เพิ่มรายการสินค้าใหม่เรียบร้อย", "success");
+            }
+
+            saveData();
+            closeProductModal();
+            renderInventoryTable();
+        }
+
+        function editProduct(id) {
+            openProductModal(id);
+        }
+
+        function confirmDeleteProduct(id) {
+            const user = getCurrentUser();
+            if (user.role !== 'Admin') {
+                showToast("เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่ได้รับสิทธิ์ให้ทำรายการลบสินค้า", "error");
+                return;
+            }
+
+            const prod = products.find(p => p.id === id);
+            if (prod) {
+                // Direct custom confirm overlay on top of frame (Avoid alerts and blocking UI)
+                const isConfirmed = confirm(`🚨 ยืนยันการลบรายการสินค้า!\nคุณกำลังจะลบ "${prod.name}" ออกจากระบบถาวร การกระทำนี้ไม่สามารถย้อนคืนได้ ยอมรับเพื่อดำเนินการต่อ?`);
+                if (isConfirmed) {
+                    products = products.filter(p => p.id !== id);
+                    saveData();
+                    addSystemLog(`🚨 ลบสินค้าถาวรออกจากฐานข้อมูล: "${prod.name}"`);
+                    renderInventoryTable();
+                    showToast("ลบข้อมูลสินค้าเรียบร้อยแล้ว", "warning");
+                }
+            }
+        }
+
+        // ================= BUSINESS LOGIC: EMPLOYEES =================
+        function renderEmployees() {
+            const grid = document.getElementById("employeesGrid");
+            grid.innerHTML = "";
+
+            employees.forEach(emp => {
+                const card = document.createElement("div");
+                card.className = "bg-slate-50 border border-slate-200 rounded-xl p-5 hover:shadow-xs transition relative overflow-hidden";
+                
+                // Active user visual outline
+                if (emp.id === currentUserId) {
+                    card.className += " ring-2 ring-brand-500 bg-brand-50/20";
+                }
+
+                // Delete employee restricted to admin
+                const currentUser = getCurrentUser();
+                const canDeleteUser = currentUser.role === 'Admin' && emp.id !== currentUserId;
+                const deleteUserBtn = canDeleteUser 
+                    ? `<button onclick="deleteEmployee(${emp.id})" class="text-rose-600 hover:text-rose-800 text-xs font-bold cursor-pointer">ลบพนักงาน</button>`
+                    : ``;
+
+                // Badge colors
+                let roleColor = "bg-slate-200 text-slate-800";
+                if (emp.role === 'Admin') roleColor = "bg-rose-100 text-rose-800";
+                else if (emp.role === 'Manager') roleColor = "bg-amber-100 text-amber-800";
+                else if (emp.role === 'Staff') roleColor = "bg-green-100 text-green-800";
+
+                card.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div class="flex gap-3">
+                            <span class="text-3xl">👤</span>
+                            <div>
+                                <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                                    ${emp.name}
+                                    ${emp.id === currentUserId ? '<span class="text-[10px] bg-brand-600 text-white px-2 py-0.5 rounded-full font-medium">คุณกำลังใช้งาน</span>' : ''}
+                                </h4>
+                                <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-bold tracking-wider ${roleColor}">
+                                    ${emp.role}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-200 flex justify-between items-center text-xs text-slate-400">
+                        <span>ID: EMP-${String(emp.id).padStart(3, '0')}</span>
+                        <div class="flex gap-2">
+                            <button onclick="simulateAs(${emp.id})" class="text-brand-600 hover:text-brand-800 font-bold cursor-pointer">สวมสิทธิ์</button>
+                            ${deleteUserBtn ? '|' : ''}
+                            ${deleteUserBtn}
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function simulateAs(id) {
+            document.getElementById("userSelector").value = id;
+            handleUserChange();
+        }
+
+        function openEmployeeModal() {
+            const user = getCurrentUser();
+            if (user.role !== 'Admin') {
+                showToast("เฉพาะสิทธิ์ Admin เท่านั้นที่จัดตั้งบัญชีและเพิ่มพนักงานได้", "error");
+                return;
+            }
+            document.getElementById("employeeModal").classList.remove("hidden");
+        }
+
+        function closeEmployeeModal() {
+            document.getElementById("employeeModal").classList.add("hidden");
+        }
+
+        function saveEmployee(event) {
+            event.preventDefault();
+            const user = getCurrentUser();
+            if (user.role !== 'Admin') {
+                showToast("สิทธิ์ไม่เพียงพอในการเพิ่มพนักงาน", "error");
+                return;
+            }
+
+            const name = document.getElementById("formEmployeeName").value.trim();
+            const role = document.getElementById("formEmployeeRole").value;
+
+            const newId = employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1;
+            employees.push({ id: newId, name, role });
+            saveData();
+            
+            addSystemLog(`แต่งตั้งพนักงานใหม่: "${name}" ในระดับสิทธิ์ "${role}"`);
+            showToast("เพิ่มพนักงานจำลองเรียบร้อยแล้ว", "success");
+
+            closeEmployeeModal();
+            initSelector();
+            renderEmployees();
+        }
+
+        function deleteEmployee(id) {
+            const user = getCurrentUser();
+            if (user.role !== 'Admin') {
+                showToast("สิทธิ์การลบผู้ใช้งานถูกจำกัดเฉพาะบทบาท Admin เท่านั้น", "error");
+                return;
+            }
+
+            const target = employees.find(e => e.id === id);
+            if (target) {
+                if (target.id === currentUserId) {
+                    showToast("ไม่สามารถลบบัญชีที่เปิดใช้ในเซสชันปัจจุบันได้", "warning");
+                    return;
+                }
+                const confirmed = confirm(`ต้องการปลดพนักงาน "${target.name}" ออกจากระบบสต็อกคลังสินค้าหรือไม่?`);
+                if (confirmed) {
+                    employees = employees.filter(e => e.id !== id);
+                    saveData();
+                    addSystemLog(`ลบบัญชีพนักงาน: "${target.name}" (บทบาท: ${target.role}) ออกจากระบบสต็อก`);
+                    showToast("ลบบัญชีพนักงานเรียบร้อย", "warning");
+                    initSelector();
+                    renderEmployees();
+                }
+            }
+        }
+
+        // ================= BUSINESS LOGIC: LOGS TERMINAL =================
+        function renderLogsTerminal() {
+            const terminal = document.getElementById("logsTerminal");
+            const counterText = document.getElementById("logCounterText");
+            terminal.innerHTML = "";
+
+            if (systemLogs.length === 0) {
+                terminal.innerHTML = `<span class="text-slate-500">No logs found in this session. All clear.</span>`;
+                return;
+            }
+
+            counterText.innerText = `Active Logs Recorded: ${systemLogs.length}`;
+
+            // Render oldest first inside terminal
+            systemLogs.forEach(log => {
+                const line = document.createElement("div");
+                line.className = "hover:bg-slate-900 py-0.5 px-1 rounded transition duration-150";
+                
+                // Color formatting based on type
+                let textClass = "text-slate-300";
+                if (log.action.includes("เพิ่มสินค้า") || log.action.includes("แต่งตั้ง")) textClass = "text-teal-300";
+                else if (log.action.includes("แก้ไข") || log.action.includes("อัปเดต")) textClass = "text-amber-300";
+                else if (log.action.includes("ลบ") || log.action.includes("🚨")) textClass = "text-rose-400";
+                else if (log.user === "SYSTEM") textClass = "text-emerald-400";
+
+                line.innerHTML = `
+                    <span class="text-slate-500 font-semibold">[${log.timestamp}]</span> 
+                    <span class="text-brand-300 font-bold">&lt;${log.user}&gt;</span>: 
+                    <span class="${textClass}">${log.action}</span>
+                `;
+                terminal.appendChild(line);
+            });
+
+            // Automatically scroll to bottom of log terminal
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function confirmClearLogs() {
+            const user = getCurrentUser();
+            if (user.role !== 'Admin') {
+                showToast("คุณต้องเป็นบทบาทผู้ดูแลระบบ (Admin) เท่านั้นในการสิทธิ์ล้างประวัติ", "error");
+                return;
+            }
+
+            const confirmed = confirm("🚨 ระวัง! คุณกำลังจะล้างประวัติกิจกรรมทั้งหมด\nการล้างประวัติจะไม่สามารถตรวจสอบย้อนกลับในอนาคตได้ ยืนยันการเคลียร์ประวัติกิจกรรมทั้งหมดหรือไม่?");
+            if (confirmed) {
+                systemLogs = [
+                    { id: 1, timestamp: new Date().toLocaleTimeString(), user: user.name, action: "เคลียร์ประวัติและเริ่มต้นระบบบันทึกความปลอดภัยใหม่โดยแอดมิน" }
+                ];
+                saveData();
+                addSystemLog("ประวัติการตรวจสอบทั้งหมดถูกรีเซ็ตโดยเจตนาเรียบร้อย");
+                showToast("ล้างประวัติทั้งหมดเรียบร้อยแล้ว", "success");
+                renderLogsTerminal();
+                renderDashboard();
+            }
+        }
+    </script>
+</body>
+</html>
