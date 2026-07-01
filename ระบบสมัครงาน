@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบรับสมัครและจัดการพนักงาน</title>
+    <!-- นำเข้า Tailwind CSS สำหรับการออกแบบที่สวยงามและรองรับมือถือ -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- นำเข้า Google Fonts (Sarabun) เพื่อความอ่านง่ายของภาษาไทย -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- แถบเมนูด้านบน (Navigation Bar) -->
+    <nav class="bg-indigo-600 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <span class="font-bold text-xl tracking-wide flex items-center gap-2">
+                        💼 ระบบรับสมัครพนักงาน
+                    </span>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="switchTab('jobs')" id="nav-jobs" class="px-3 py-2 rounded-md text-sm font-medium bg-indigo-700 text-white transition-colors">ตำแหน่งงาน</button>
+                    <button onclick="switchTab('apply')" id="nav-apply" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-500 transition-colors">สมัครงาน</button>
+                    <button onclick="switchTab('employee')" id="nav-employee" class="px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-500 transition-colors">ระบบพนักงาน</button>
+                    <button onclick="switchTab('admin')" id="nav-admin" class="px-3 py-2 rounded-md text-sm font-medium bg-amber-500 hover:bg-amber-600 text-slate-900 transition-colors flex items-center gap-1">🔑 แอดมิน</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- แจ้งเตือน (Toast Notification Container) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <!-- เนื้อหาหลัก (Main Content) -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- ================= แท็บ 1: ตำแหน่งงานว่าง (Jobs Tab) ================= -->
+        <section id="tab-jobs" class="tab-content space-y-8">
+            <div class="text-center max-w-3xl mx-auto space-y-4">
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">มาร่วมเป็นส่วนหนึ่งของทีมเรา! 🚀</h1>
+                <p class="text-lg text-slate-600">เรากำลังมองหาผู้มีความสามารถมาร่วมพัฒนาสร้างสรรค์สิ่งใหม่ๆ ไปด้วยกัน เลือกตำแหน่งงานที่ใช่แล้วสมัครได้เลย</p>
+            </div>
+
+            <!-- การ์ดตำแหน่งงาน -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- งาน 1 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md border border-slate-100 transition-shadow flex flex-col justify-between">
+                    <div>
+                        <span class="bg-indigo-100 text-indigo-800 text-xs font-semibold px-2.5 py-1 rounded-full">งานแนะนำ</span>
+                        <h3 class="text-xl font-bold mt-3 text-slate-800">นักพัฒนาเว็บ (Frontend Developer)</h3>
+                        <p class="text-sm text-slate-500 mt-1">อัตรา: 2 อัตรา | ทำงานที่บ้าน (Remote)</p>
+                        <p class="text-slate-600 mt-4 text-sm leading-relaxed">พัฒนาและดูแลหน้าเว็บให้ออกมาสวยงาม ใช้งานง่าย และตอบสนองรวดเร็วด้วย HTML, CSS, JS และ React</p>
+                    </div>
+                    <button onclick="prepareApply('นักพัฒนาเว็บ (Frontend Developer)')" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-xl transition-colors">
+                        สมัครตำแหน่งนี้
+                    </button>
+                </div>
+
+                <!-- งาน 2 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md border border-slate-100 transition-shadow flex flex-col justify-between">
+                    <div>
+                        <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2.5 py-1 rounded-full">รับด่วน</span>
+                        <h3 class="text-xl font-bold mt-3 text-slate-800">ผู้ดูแลเนื้อหา (Content Creator)</h3>
+                        <p class="text-sm text-slate-500 mt-1">อัตรา: 1 อัตรา | ทำงานที่บ้าน/ออฟฟิศ</p>
+                        <p class="text-slate-600 mt-4 text-sm leading-relaxed">คิดคอนเทนต์ ออกแบบกราฟิกเบื้องต้น และเขียนบทความเพื่อโปรโมตแบรนด์และผลงานผ่านช่องทางโซเชียลมีเดีย</p>
+                    </div>
+                    <button onclick="prepareApply('ผู้ดูแลเนื้อหา (Content Creator)')" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-xl transition-colors">
+                        สมัครตำแหน่งนี้
+                    </button>
+                </div>
+
+                <!-- งาน 3 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md border border-slate-100 transition-shadow flex flex-col justify-between">
+                    <div>
+                        <span class="bg-sky-100 text-sky-800 text-xs font-semibold px-2.5 py-1 rounded-full">พาร์ทไทม์</span>
+                        <h3 class="text-xl font-bold mt-3 text-slate-800">ฝ่ายบริการลูกค้า (Admin Support)</h3>
+                        <p class="text-sm text-slate-500 mt-1">อัตรา: 3 อัตรา | ทำงานเป็นกะ</p>
+                        <p class="text-slate-600 mt-4 text-sm leading-relaxed">คอยตอบคำถามและให้คำแนะนำแก่ผู้เข้าชมเว็บไซต์ แก้ไขปัญหาเบื้องต้น และประสานงานกับฝ่ายที่เกี่ยวข้อง</p>
+                    </div>
+                    <button onclick="prepareApply('ฝ่ายบริการลูกค้า (Admin Support)')" class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-xl transition-colors">
+                        สมัครตำแหน่งนี้
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= แท็บ 2: ฟอร์มสมัครงาน (Apply Tab) ================= -->
+        <section id="tab-apply" class="tab-content hidden max-w-2xl mx-auto">
+            <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100">
+                <h2 class="text-2xl font-bold text-slate-900 mb-6">ฟอร์มส่งประวัติสมัครงาน</h2>
+                
+                <form id="applyForm" onsubmit="handleApply(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">ตำแหน่งที่ต้องการสมัคร *</label>
+                        <select id="apply-job" required class="w-full rounded-xl border border-slate-300 px-4 py-2.5 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow">
+                            <option value="">-- โปรดเลือกตำแหน่งงาน --</option>
+                            <option value="นักพัฒนาเว็บ (Frontend Developer)">นักพัฒนาเว็บ (Frontend Developer)</option>
+                            <option value="ผู้ดูแลเนื้อหา (Content Creator)">ผู้ดูแลเนื้อหา (Content Creator)</option>
+                            <option value="ฝ่ายบริการลูกค้า (Admin Support)">ฝ่ายบริการลูกค้า (Admin Support)</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">ชื่อ-นามสกุล *</label>
+                            <input type="text" id="apply-name" required placeholder="สมชาย รักดี" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1">เบอร์โทรศัพท์ *</label>
+                            <input type="tel" id="apply-phone" required placeholder="089-XXXXXXX" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">อีเมลผู้สมัคร *</label>
+                        <input type="email" id="apply-email" required placeholder="somchai@example.com" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow">
+                        <p class="text-xs text-slate-400 mt-1">ใช้อีเมลนี้ในการเข้าสู่ระบบพนักงานหลังจากได้รับการอนุมัติ</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">แนะนำตัวและจุดเด่นของคุณ (ย่อๆ) *</label>
+                        <textarea id="apply-bio" required rows="4" placeholder="บอกเหตุผลที่อยากร่วมงาน หรือทักษะที่เกี่ยวข้องกับตำแหน่งนี้..." class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow"></textarea>
+                    </div>
+
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition-colors">
+                        ส่งข้อมูลใบสมัคร 📤
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= แท็บ 3: ระบบพนักงาน (Employee Tab) ================= -->
+        <section id="tab-employee" class="tab-content hidden max-w-4xl mx-auto space-y-6">
+            <!-- หน้าต่างล็อกอินพนักงาน -->
+            <div id="emp-login-box" class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-100 max-w-md mx-auto">
+                <h2 class="text-xl font-bold text-slate-900 mb-2 text-center">🔐 ล็อกอินเข้าสู่ระบบพนักงาน</h2>
+                <p class="text-sm text-slate-500 text-center mb-6">กรอกอีเมลที่คุณใช้ส่งใบสมัครเพื่อตรวจสอบสิทธิ์</p>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">อีเมลพนักงาน</label>
+                        <input type="email" id="emp-login-email" placeholder="example@mail.com" class="w-full rounded-xl border border-slate-300 px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow">
+                    </div>
+                    <button onclick="handleEmployeeLogin()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-colors">
+                        เข้าสู่ระบบ
+                    </button>
+                </div>
+            </div>
+
+            <!-- หน้าแดชบอร์ดพนักงาน (จะแสดงเมื่อล็อกอินสำเร็จ) -->
+            <div id="emp-dashboard" class="hidden space-y-6">
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <span class="bg-emerald-100 text-emerald-800 text-xs font-semibold px-2.5 py-1 rounded-full">พนักงานประจำ</span>
+                        <h2 class="text-2xl font-bold text-slate-900 mt-2" id="emp-dash-name">ยินดีต้อนรับคุณพนักงาน</h2>
+                        <p class="text-slate-500 text-sm" id="emp-dash-job">ตำแหน่งงาน</p>
+                    </div>
+                    <button onclick="handleEmployeeLogout()" class="bg-rose-100 hover:bg-rose-200 text-rose-700 text-sm font-semibold py-2 px-4 rounded-xl transition-colors">
+                        ออกจากระบบ 👋
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- การ์ด 1: ลงเวลาเข้า-ออกงาน -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 md:col-span-1 space-y-4">
+                        <h3 class="font-bold text-lg text-slate-900 border-b pb-2 flex items-center gap-2">⏰ ลงเวลางานวันนี้</h3>
+                        <div class="text-center py-4 bg-slate-50 rounded-xl">
+                            <p class="text-sm text-slate-500">เวลาขณะนี้</p>
+                            <p class="text-3xl font-extrabold text-slate-800" id="current-clock">00:00:00</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="btn-clock-in" onclick="recordTime('เข้างาน')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 px-4 rounded-xl transition-colors">
+                                เข้างาน
+                            </button>
+                            <button id="btn-clock-out" onclick="recordTime('ออกงาน')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold py-2.5 px-4 rounded-xl transition-colors">
+                                ออกงาน
+                            </button>
+                        </div>
+                        <div class="text-xs text-slate-500 text-center" id="last-clock-record">ยังไม่มีประวัติการลงเวลาในวันนี้</div>
+                    </div>
+
+                    <!-- การ์ด 2: ประกาศข่าวสารภายใน และภารกิจ -->
+                    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 md:col-span-2 space-y-4">
+                        <h3 class="font-bold text-lg text-slate-900 border-b pb-2">📢 ข่าวสารและงานที่ต้องทำ</h3>
+                        
+                        <div class="space-y-3">
+                            <div class="p-3 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg">
+                                <span class="text-xs font-bold text-amber-800">ประกาศด่วน</span>
+                                <h4 class="font-semibold text-slate-800 text-sm">ยินดีต้อนรับสมาชิกใหม่ทุกคนเข้าสู่ทีม!</h4>
+                                <p class="text-xs text-slate-600 mt-1">ขอให้พนักงานใหม่ทุกคนเข้ามาลงเวลางานและตรวจสอบภารกิจประจำสัปดาห์</p>
+                            </div>
+
+                            <div class="p-4 border rounded-xl space-y-2">
+                                <h4 class="font-bold text-slate-800 text-sm">✔️ เช็คลิสต์ภารกิจสัปดาห์นี้</h4>
+                                <div class="space-y-1.5 text-sm">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                        <span>กรอกข้อมูลประวัติส่วนตัวเพิ่มให้ครบถ้วน</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                        <span>ทดลองกดปุ่มเข้างานเพื่อทดสอบระบบ</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= แท็บ 4: ระบบควบคุมหลังบ้านของแอดมิน (Admin Tab) ================= -->
+        <section id="tab-admin" class="tab-content hidden space-y-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900">🔒 แผงควบคุมผู้ดูแลระบบ (Admin)</h2>
+                        <p class="text-slate-500 text-sm">จัดการผู้สมัคร และอนุมัติพวกเขาให้เข้ามาเป็น "พนักงาน" บนเว็บของคุณ</p>
+                    </div>
+                    <button onclick="resetSystem()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold py-2 px-3 rounded-lg border border-rose-200 transition-colors">
+                        🔄 รีเซ็ตระบบทั้งหมด
+                    </button>
+                </div>
+
+                <!-- ตารางแสดงผู้สมัคร -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200 text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-600 uppercase text-xs font-bold">
+                            <tr>
+                                <th class="px-6 py-3">ผู้สมัคร</th>
+                                <th class="px-6 py-3">ตำแหน่งงาน</th>
+                                <th class="px-6 py-3">ประวัติคร่าวๆ</th>
+                                <th class="px-6 py-3">สถานะ</th>
+                                <th class="px-6 py-3 text-center">การจัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-applicant-list" class="divide-y divide-slate-100 text-slate-700">
+                            <!-- รายการจะถูกสร้างผ่าน JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-xs text-slate-400 mt-4 text-center">*หมายเหตุ: ระบบเก็บข้อมูลไว้ในเบราว์เซอร์ปัจจุบันของคุณเท่านั้น ข้อมูลจะไม่สูญหายเมื่อคุณรีเฟรชหน้าเว็บ</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ส่วนท้ายหน้าเว็บ (Footer) -->
+    <footer class="bg-slate-900 text-slate-400 py-6 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-2">
+            <p class="text-sm">💻 ระบบรับสมัครพนักงานและลงเวลาจำลอง - ออกแบบสำหรับผู้เริ่มต้น</p>
+            <p class="text-xs text-slate-500">สร้างด้วยความใส่ใจเพื่อสนับสนุนการเรียนรู้การเขียนโค้ดของวัยรุ่นและเยาวชนไทย</p>
+        </div>
+    </footer>
+
+    <!-- ส่วนของสคริปต์การทำงาน (JavaScript) -->
+    <script>
+        // เริ่มต้นสร้างข้อมูลจำลองหากเปิดครั้งแรกเพื่อความสวยงาม
+        const DEFAULT_APPLICANTS = [
+            {
+                id: "1",
+                name: "สมเกียรติ ยอดเยี่ยม",
+                phone: "081-234-5678",
+                email: "somkiat@example.com",
+                job: "นักพัฒนาเว็บ (Frontend Developer)",
+                bio: "ชอบเขียนโค้ดและดีไซน์หน้าเว็บให้สวยงาม มีพอร์ตโฟลิโอส่วนตัวระดับมัธยมปลายแล้วครับ",
+                status: "applicant" // "applicant" หรือ "employee"
+            },
+            {
+                id: "2",
+                name: "ณิชาภัทร วงศ์เจริญ",
+                phone: "082-987-6543",
+                email: "nichapat@example.com",
+                job: "ผู้ดูแลเนื้อหา (Content Creator)",
+                bio: "ชื่นชอบการทำกราฟิกแคนวา และเขียนเรื่องเล่าลงโซเชียล มีคนติดตามอยู่ 1,000+ คนค่ะ",
+                status: "employee" // คนนี้ได้รับการอนุมัติแล้วเพื่อเป็นตัวอย่างพนักงาน
+            }
+        ];
+
+        // ฟังก์ชันดึงข้อมูลจาก LocalStorage
+        function getApplicants() {
+            const data = localStorage.getItem("site_applicants");
+            if (!data) {
+                localStorage.setItem("site_applicants", JSON.stringify(DEFAULT_APPLICANTS));
+                return DEFAULT_APPLICANTS;
+            }
+            return JSON.parse(data);
+        }
+
+        // ฟังก์ชันเซฟข้อมูลกลับไปที่ LocalStorage
+        function saveApplicants(data) {
+            localStorage.setItem("site_applicants", JSON.stringify(data));
+        }
+
+        // ตัวแปรเก็บผู้ใช้ที่ล็อกอินอยู่ปัจจุบัน
+        let currentLoggedInEmployee = null;
+
+        // ฟังก์ชันสลับแท็บเมนู
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+
+            // อัปเดตสีปุ่มนำทาง
+            const buttons = ['nav-jobs', 'nav-apply', 'nav-employee', 'nav-admin'];
+            buttons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) {
+                    if (btnId === 'nav-' + tabName) {
+                        btn.className = btnId === 'nav-admin' 
+                            ? "px-3 py-2 rounded-md text-sm font-medium bg-amber-600 text-slate-900 transition-colors flex items-center gap-1"
+                            : "px-3 py-2 rounded-md text-sm font-medium bg-indigo-700 text-white transition-colors";
+                    } else {
+                        btn.className = btnId === 'nav-admin'
+                            ? "px-3 py-2 rounded-md text-sm font-medium bg-amber-500 hover:bg-amber-600 text-slate-900 transition-colors flex items-center gap-1"
+                            : "px-3 py-2 rounded-md text-sm font-medium hover:bg-indigo-500 text-white transition-colors";
+                    }
+                }
+            });
+
+            // อัปเดตตารางแอดมินทุกครั้งเมื่อคลิกเข้าแผงแอดมิน
+            if (tabName === 'admin') {
+                renderAdminList();
+            }
+        }
+
+        // ฟังก์ชันช่วยเตรียมการเมื่อกด "สมัครตำแหน่งนี้" จากหน้าแรก
+        function prepareApply(jobTitle) {
+            document.getElementById('apply-job').value = jobTitle;
+            switchTab('apply');
+            showToast('เลือกตำแหน่ง ' + jobTitle + ' ให้คุณแล้ว!', 'success');
+        }
+
+        // ฟังก์ชันแจ้งเตือนในระบบแบบป๊อปอัปเล็กๆ (แทนการใช้ alert)
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            let bgClass = 'bg-slate-800';
+            if (type === 'success') bgClass = 'bg-emerald-600';
+            if (type === 'error') bgClass = 'bg-rose-600';
+            if (type === 'warning') bgClass = 'bg-amber-500 text-slate-950';
+
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm transition-all transform translate-y-2 opacity-0 duration-300`;
+            toast.innerHTML = `<span>🔔</span> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            // แอนิเมชันให้ค่อยๆ แสดงขึ้นมา
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            // นำป๊อปอัปออกเมื่อครบ 3 วินาที
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // ฟังก์ชันเมื่อผู้สมัครกด "ส่งใบสมัคร"
+        function handleApply(e) {
+            e.preventDefault();
+            
+            const job = document.getElementById('apply-job').value;
+            const name = document.getElementById('apply-name').value;
+            const phone = document.getElementById('apply-phone').value;
+            const email = document.getElementById('apply-email').value;
+            const bio = document.getElementById('apply-bio').value;
+
+            if (!job || !name || !phone || !email || !bio) {
+                showToast('กรุณากรอกข้อมูลให้ครบถ้วนก่อนส่งใบสมัคร', 'error');
+                return;
+            }
+
+            const applicants = getApplicants();
+            
+            // ตรวจสอบว่าเคยใช้อีเมลนี้สมัครหรือยัง
+            const alreadyExists = applicants.some(app => app.email.toLowerCase() === email.toLowerCase());
+            if (alreadyExists) {
+                showToast('อีเมลนี้เคยถูกใช้ส่งใบสมัครแล้ว', 'warning');
+                return;
+            }
+
+            const newApplicant = {
+                id: Date.now().toString(),
+                name,
+                phone,
+                email,
+                job,
+                bio,
+                status: 'applicant' // สถานะผู้สมัคร รอการอนุมัติจากแอดมิน
+            };
+
+            applicants.push(newApplicant);
+            saveApplicants(applicants);
+
+            // เคลียร์ฟอร์ม
+            document.getElementById('applyForm').reset();
+            
+            showToast('ส่งใบสมัครสำเร็จแล้ว! กรุณาแจ้งแอดมินให้มาตรวจสอบและอนุมัติใบสมัครของคุณ', 'success');
+            
+            // ย้ายไปแถบเมนูตำแหน่งงาน
+            setTimeout(() => {
+                switchTab('jobs');
+            }, 1000);
+        }
+
+        // ฟังก์ชันดึงรายชื่อผู้สมัครและพนักงานมาแสดงในหน้าแอดมิน
+        function renderAdminList() {
+            const listContainer = document.getElementById('admin-applicant-list');
+            const applicants = getApplicants();
+
+            if (applicants.length === 0) {
+                listContainer.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-slate-400">
+                            📭 ยังไม่มีข้อมูลผู้สมัครงานในขณะนี้
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            listContainer.innerHTML = '';
+            applicants.forEach(app => {
+                const statusBadge = app.status === 'employee' 
+                    ? `<span class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">👤 พนักงานประจำ</span>`
+                    : `<span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-full font-bold">⏳ รอพิจารณา</span>`;
+
+                const actionButtons = app.status === 'applicant'
+                    ? `<button onclick="approveApplicant('${app.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-1.5 px-3 rounded-lg mr-2 transition-colors">✔️ อนุมัติ</button>
+                       <button onclick="rejectApplicant('${app.id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-600 font-semibold text-xs py-1.5 px-3 rounded-lg transition-colors">ปฏิเสธ</button>`
+                    : `<button onclick="demoteApplicant('${app.id}')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs py-1.5 px-3 rounded-lg transition-colors">ยกเลิกสถานะพนักงาน</button>`;
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-slate-50 transition-colors";
+                row.innerHTML = `
+                    <td class="px-6 py-4">
+                        <div class="font-bold text-slate-900">${app.name}</div>
+                        <div class="text-xs text-slate-500">โทร: ${app.phone}</div>
+                        <div class="text-xs text-slate-500">อีเมล: ${app.email}</div>
+                    </td>
+                    <td class="px-6 py-4 font-medium text-slate-700">${app.job}</td>
+                    <td class="px-6 py-4 max-w-xs truncate text-slate-600" title="${app.bio}">${app.bio}</td>
+                    <td class="px-6 py-4">${statusBadge}</td>
+                    <td class="px-6 py-4 text-center">${actionButtons}</td>
+                `;
+                listContainer.appendChild(row);
+            });
+        }
+
+        // ฟังก์ชันกด "อนุมัติ" ให้ผู้สมัครกลายเป็นพนักงาน
+        function approveApplicant(id) {
+            const applicants = getApplicants();
+            const target = applicants.find(app => app.id === id);
+            if (target) {
+                target.status = 'employee';
+                saveApplicants(applicants);
+                showToast(`อนุมัติคุณ ${target.name} เป็นพนักงานสำเร็จ! 🎉`, 'success');
+                renderAdminList();
+            }
+        }
+
+        // ฟังก์ชันกด "ปฏิเสธ" (ลบผู้สมัครออกจากตาราง)
+        function rejectApplicant(id) {
+            let applicants = getApplicants();
+            const target = applicants.find(app => app.id === id);
+            if (target) {
+                applicants = applicants.filter(app => app.id !== id);
+                saveApplicants(applicants);
+                showToast(`ปฏิเสธคำขอสมัครงานของคุณ ${target.name} เรียบร้อย`, 'info');
+                renderAdminList();
+            }
+        }
+
+        // ฟังก์ชันปลดพนักงานกลับไปเป็นผู้สมัคร
+        function demoteApplicant(id) {
+            const applicants = getApplicants();
+            const target = applicants.find(app => app.id === id);
+            if (target) {
+                target.status = 'applicant';
+                saveApplicants(applicants);
+                showToast(`เปลี่ยนสถานะคุณ ${target.name} กลับไปเป็นผู้สมัคร`, 'info');
+                renderAdminList();
+            }
+        }
+
+        // ฟังก์ชันล็อกอินพนักงาน
+        function handleEmployeeLogin() {
+            const emailInput = document.getElementById('emp-login-email').value.trim();
+            if (!emailInput) {
+                showToast('กรุณากรอกอีเมลที่ใช้สมัครงาน', 'warning');
+                return;
+            }
+
+            const applicants = getApplicants();
+            // ค้นหาผู้ใช้จากอีเมล
+            const user = applicants.find(app => app.email.toLowerCase() === emailInput.toLowerCase());
+
+            if (!user) {
+                showToast('ไม่พบข้อมูลผู้ใช้จากอีเมลนี้ กรุณาส่งประวัติสมัครงานก่อน', 'error');
+                return;
+            }
+
+            if (user.status !== 'employee') {
+                showToast('ใบสมัครของคุณยังไม่ได้รับการอนุมัติ (กรุณาลองเข้าระบบแอดมินเพื่อกดอนุมัติด้วยตนเองเพื่อทดสอบระบบ)', 'warning');
+                return;
+            }
+
+            // ล็อกอินสำเร็จ
+            currentLoggedInEmployee = user;
+            document.getElementById('emp-login-box').classList.add('hidden');
+            document.getElementById('emp-dashboard').classList.remove('hidden');
+
+            // อัปเดตข้อมูลบนแดชบอร์ด
+            document.getElementById('emp-dash-name').textContent = `ยินดีต้อนรับคุณ ${user.name} 👋`;
+            document.getElementById('emp-dash-job').textContent = `ตำแหน่ง: ${user.job}`;
+            
+            showToast('เข้าสู่ระบบพนักงานสำเร็จ!', 'success');
+        }
+
+        // ฟังก์ชันออกจากระบบพนักงาน
+        function handleEmployeeLogout() {
+            currentLoggedInEmployee = null;
+            document.getElementById('emp-login-email').value = '';
+            document.getElementById('emp-login-box').classList.remove('hidden');
+            document.getElementById('emp-dashboard').classList.add('hidden');
+            showToast('ออกจากระบบเรียบร้อย', 'info');
+        }
+
+        // ฟังก์ชันจำลองการลงเวลาเข้า-ออกงาน
+        function recordTime(type) {
+            if (!currentLoggedInEmployee) return;
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('th-TH');
+            
+            const btnIn = document.getElementById('btn-clock-in');
+            const btnOut = document.getElementById('btn-clock-out');
+
+            if (type === 'เข้างาน') {
+                btnIn.disabled = true;
+                btnIn.classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('last-clock-record').textContent = `บันทึกเวลาล่าสุด: เข้างานตอน ${timeString}`;
+                showToast(`ลงเวลาเข้างานตอน ${timeString} สำเร็จ!`, 'success');
+            } else {
+                btnIn.disabled = false;
+                btnIn.classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('last-clock-record').textContent = `บันทึกเวลาล่าสุด: ออกงานตอน ${timeString}`;
+                showToast(`ลงเวลาออกงานตอน ${timeString} สำเร็จ!`, 'success');
+            }
+        }
+
+        // ฟังก์ชันรีเซ็ตระบบกลับเป็นค่าเริ่มต้น (มีประโยชน์มากสำหรับการทดสอบใหม่)
+        function resetSystem() {
+            if (confirm('คุณแน่ใจหรือไม่ที่จะรีเซ็ตข้อมูลทั้งหมดกลับสู่ค่าเริ่มต้น?')) {
+                localStorage.removeItem("site_applicants");
+                getApplicants(); // จะทำการเซ็ตข้อมูลตั้งต้นใหม่ให้เอง
+                renderAdminList();
+                if (currentLoggedInEmployee) {
+                    handleEmployeeLogout();
+                }
+                showToast('รีเซ็ตฐานข้อมูลจำลองเรียบร้อยแล้วครับ', 'success');
+            }
+        }
+
+        // ฟังก์ชันสร้างเวลานาฬิกาแบบ Realtime
+        function startRealtimeClock() {
+            setInterval(() => {
+                const now = new Date();
+                const clockDiv = document.getElementById('current-clock');
+                if (clockDiv) {
+                    clockDiv.textContent = now.toLocaleTimeString('th-TH');
+                }
+            }, 1000);
+        }
+
+        // เริ่มต้นการทำงานของหน้าเว็บ
+        window.onload = function() {
+            getApplicants(); // เตรียมข้อมูลลง LocalStorage
+            startRealtimeClock(); // เริ่มการทำงานของเวลานาฬิกา
+        }
+    </script>
+</body>
+</html>
